@@ -1,0 +1,194 @@
+# Starbucks Promotional Response Prediction Using Machine Learning
+
+## Domain Background
+
+Digital loyalty programs have become a cornerstone of modern marketing, especially in industries such as food service, retail, and e-commerce. Starbucks’ mobile rewards app represents one of the most successful implementations of personalized digital engagement, delivering targeted promotional offers such as buy-one-get-one (BOGO), discounts, and informational ads to millions of customers. Understanding which customers will respond positively to which types of offers is a fundamental problem in marketing analytics, influencing promotional spend, customer retention, and long-term revenue.
+
+The dataset used in this project is a simulated data designed to reflect realistic behavioral patterns rather than synthetic randomness. In the simulation, different types of users show different behaviors: some respond strongly to certain offers, some respond negatively or ignore offers entirely, and some consistently make purchases with no promotional influence. This dynamic mirrors real business considerations—sometimes the best action is not sending an offer to certain customers.
+
+The dataset also incorporates important marketing complexities: time-bounded offer validity windows, varied offer channels, multi-event user journeys (receive → view → transact → complete), and behavior not directly attributable to any offer. Critically, a user can complete an offer without viewing it (meaning they were not influenced), or they can purchase without receiving any offer at all. This creates a challenging environment for labeling causal offer responses, making the problem both realistic and educational.
+
+This project aims to apply machine learning to uncover these behavioral patterns and determine which customer segments benefit from which promotional strategies.
+
+## Problem Statement
+
+Starbucks sends different promotional offers to app users, but customers vary widely in whether they view, ignore, or complete these offers. Sending the wrong offer can waste marketing resources or reduce customer satisfaction, and in some cases the best action is not sending an offer at all.
+Given customer demographics, offer characteristics, and event behavior, can we predict whether a customer will respond positively to a specific promotional offer?
+
+A “response” is defined as a user viewing and completing an offer within the offer’s validity period.
+This problem is quantifiable (binary response), measurable (based on timestamps and event logs), and replicable using the simulated dataset.
+
+### Datasets and Inputs
+
+The project uses three JSON files provided in the Starbucks Capstone dataset:
+
+1. portfolio.json — Offer Metadata
+
+id: offer ID
+
+offer_type: bogo, discount, informational
+
+difficulty: minimum required spend
+
+reward: incentive amount
+
+duration: active window (days)
+
+channels: list of delivery channels (email, mobile, web, social)
+
+2. profile.json — Customer Demographics
+
+id: customer ID
+
+age 
+
+gender (M, F, O, None)
+
+income
+
+became_member_on (YYYYMMDD)
+
+3. transcript.json 
+
+ events : offer received, offer viewed, offer completed, transaction
+
+Each event includes:
+
+person: customer ID
+
+time: hours since test start
+
+value: contains offer_id, amount spent, or reward depending on event type
+
+It contains all components needed to understand offer behavior: demographics, offer design, and time-based actions.The simulation captures realistic cause-and-effect patterns (e.g., viewing before completing shows influence).It includes complexity such as customers completing offers without viewing them, or making purchases without offers.It allows construction of a precise, reproducible label of promotional response.
+
+## Solution Statement
+
+The proposed solution is to develop a supervised machine learning model that predicts whether a customer will respond to an offer.
+
+Steps include:
+
+Exploratory Data Analysis
+
+Flatten transcript event logs
+
+Identify each offer instance
+
+Compute offer start/end windows
+
+Define response label: viewed + completed within validity period
+
+Merge customer and offer metadata
+
+Engineer features such as membership tenure, income bands, channels, and offer difficulty
+
+Examine response patterns across demographics and offer types
+
+Identify customers who purchase regardless of offers, customers who respond positively to the offers and the custimer gorups that respond negatively that they prefer not to receive the offers.
+
+
+### Model Development
+
+Train baseline logistic regression
+
+Train tree-based and boosted models (Random Forest, XGBoost, or AutoGluon Tabular)
+
+Compare predictive performance using formal evaluation metrics
+
+Insights & Business Value
+
+Identify which offer types work for which customer segments
+
+Determine segments that respond negatively or prefer no offers
+
+Provide data-driven marketing recommendations
+
+This solution is measurable, replicable, and reflects realistic marketing decision-making.
+
+## Benchmark Model
+
+The benchmark model will be a Logistic Regression classifier, which is widely used in traditional marketing response modeling, provides interpretable coefficients and serves as a simple, transparent baseline
+
+Establishes a performance threshold (e.g., ROC-AUC ≈ 0.55–0.65). More advanced models will be compared against this baseline.
+
+## Evaluation Metrics
+
+Due to class imbalance and the importance of ranking customers correctly, the following metrics will be used:
+
+### Primary Metric
+
+ROC-AUC
+
+Measures ranking quality
+
+Handles imbalanced classes well
+
+### Secondary Metrics
+
+Precision / Recall
+
+F1-Score
+
+Confusion Matrix Breakdown (especially false positives—sending unnecessary offers)
+
+These metrics allow evaluating not only the model’s overall predictive power but also its ability to correctly identify customers who belong to the “do not send offer” category.
+
+## . Project Design
+
+1. EDA & Data Cleansing
+
+Explore distributions of age, income, gender
+
+Understand offer types and channels
+
+Examine event frequency and sequencing
+
+Address missing ages and inconsistent values
+
+Flatten the value dict in transcript (offer_id, amount, reward)
+
+2. Offer Labeling Logic
+
+For each offer received:
+
+Track offer start and expiration (duration × 24 hours)
+
+Identify if the offer was viewed within window
+
+Identify if it was completed within window
+
+Responded = viewed AND completed
+
+and distinguish
+
+customers who respond negatively to offers
+
+customers who respond positively to offers
+
+purchasers unaffected by offers, customers who complete offers without viewing
+
+3. Feature Engineering
+
+One-hot encode channels
+
+Map offer types
+
+Construct tenure (member_days)
+
+Bucket income and age
+
+Track behavioral indicators (prior transactions, prior views)
+
+4. Modeling
+
+Train/test split
+
+Logistic Regression baseline
+
+Random Forest / XGBoost / AutoGluon
+
+Compare models using ROC-AUC and F1
+
+Interpret feature importances
+
+Analyze where the model predicts “no offer needed”
